@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#241b33">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="安全屋">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<link rel="manifest" href="manifest.json">
+<title>安全屋 · 呼啸客栈</title>
+<style>
+  :root{
+    --void:#1d1526; --dusk:#2c2038; --lilac:#cbb6ec; --glow:#efe4ff;
+    --rose:#e6b9cf; --muted:#8877a6; --line:rgba(203,182,236,.18);
+    --card:rgba(203,182,236,.07); --warm:#f0d9a8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+    background:var(--void);color:var(--glow);min-height:100dvh;-webkit-font-smoothing:antialiased}
+  .app{position:relative;width:100%;max-width:460px;margin:0 auto;min-height:100dvh;overflow-x:hidden}
+
+  .screen{min-height:100dvh;display:none;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:calc(30px + env(safe-area-inset-top)) 30px calc(30px + env(safe-area-inset-bottom));gap:22px}
+  .screen.show{display:flex;animation:fade .7s ease both}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+
+  h1{font-family:"Songti SC","Noto Serif SC",serif;font-size:25px;font-weight:600;line-height:1.6;letter-spacing:1px}
+  .lead{font-size:15px;line-height:1.9;color:var(--glow);opacity:.9;max-width:18em}
+  .soft{font-size:13.5px;line-height:1.8;color:var(--muted);max-width:19em}
+  textarea{width:100%;max-width:20em;background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:14px 16px;color:var(--glow);font-size:15.5px;font-family:inherit;outline:none;resize:none;min-height:80px;line-height:1.7}
+  textarea::placeholder{color:var(--muted)}
+  textarea:focus{border-color:rgba(203,182,236,.45)}
+
+  button{font-family:inherit;cursor:pointer;border:none;font-size:16px;border-radius:100px;transition:.2s;width:100%;max-width:20em}
+  .primary{background:linear-gradient(180deg,#d9c6f2,#b79ce4);color:#241033;font-weight:600;padding:15px;
+    box-shadow:0 8px 22px -8px rgba(120,90,160,.6)}
+  .primary:active{transform:scale(.98)}
+  .ghost{background:transparent;color:var(--glow);border:1px solid var(--line);padding:14px}
+  .btns{width:100%;display:flex;flex-direction:column;gap:11px;align-items:center;margin-top:2px}
+  .foot{text-align:center;font-size:11px;color:var(--muted);letter-spacing:2px;padding-bottom:6px}
+  .link{background:none;border:none;color:var(--lilac);font-size:13px;opacity:.75;cursor:pointer;width:auto;padding:6px}
+
+  /* 门 */
+  .door-stage{position:relative;width:200px;height:280px;margin:4px auto;perspective:900px}
+  .frame{position:absolute;inset:0;border-radius:100px 100px 10px 10px;
+    background:linear-gradient(180deg,#3a2c48,#241a30);
+    box-shadow:0 14px 34px -12px rgba(0,0,0,.6), inset 0 0 0 3px rgba(203,182,236,.18)}
+  .outside{position:absolute;inset:9px;border-radius:94px 94px 6px 6px;overflow:hidden;
+    background:radial-gradient(120% 90% at 50% 30%, #6a5570, #2a2033 75%)}
+  .outside .words{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    padding:24px;font-size:13px;line-height:1.8;color:#d8c2d0;opacity:.85;text-align:center;
+    font-family:"Songti SC",serif;word-break:break-word}
+  .door{position:absolute;inset:9px;border-radius:94px 94px 6px 6px;transform-origin:left center;
+    background:linear-gradient(120deg,#b79ce4,#8f74c0 60%,#6d5595);
+    box-shadow:inset -8px 0 20px -8px rgba(0,0,0,.4), inset 0 2px 10px rgba(255,255,255,.3);
+    transform:rotateY(-78deg);transition:transform 3.2s cubic-bezier(.5,.05,.3,1);
+    display:flex;align-items:center;justify-content:center}
+  .door.closed{transform:rotateY(0deg)}
+  .knob{position:absolute;right:20px;top:50%;width:14px;height:14px;border-radius:50%;
+    background:radial-gradient(circle at 38% 34%,#fff4d0,#e8c07a);box-shadow:0 0 8px rgba(240,200,120,.6)}
+  .plate{font-family:"Songti SC","Noto Serif SC",serif;font-size:22px;font-weight:600;line-height:1.5;
+    color:#2e2140;padding:0 22px;text-align:center;opacity:.92;letter-spacing:1px}
+
+  /* 安全屋内 */
+  .inside{background:radial-gradient(130% 100% at 50% 30%, #37294a 0%, #1d1526 75%)}
+  .lamp{width:70px;height:70px;border-radius:50%;margin-bottom:6px;
+    background:radial-gradient(circle at 50% 45%, #fff2cf, #f0d9a8 55%, rgba(240,217,168,0) 74%);
+    animation:breathe 6s ease-in-out infinite;filter:blur(.3px)}
+  @keyframes breathe{0%,100%{opacity:.85;transform:scale(.97)}50%{opacity:1;transform:scale(1.03)}}
+  .manifesto{font-family:"Songti SC","Noto Serif SC",serif;font-size:17px;line-height:2.1;color:var(--glow);
+    letter-spacing:1px;max-width:15em}
+  .manifesto .em{color:var(--warm)}
+
+  /* 宣言墙 */
+  .wall-screen{background:
+      radial-gradient(60% 45% at 26% 30%, rgba(240,200,120,.16), transparent 60%),
+      radial-gradient(60% 45% at 74% 30%, rgba(240,200,120,.16), transparent 60%),
+      linear-gradient(180deg,#2a2038,#1a1324);min-height:100dvh}
+  .candles{display:flex;justify-content:space-between;align-items:flex-end;width:210px;margin:2px auto 8px}
+  .candle{display:flex;flex-direction:column;align-items:center;gap:3px}
+  .flame{width:14px;height:22px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;
+    background:radial-gradient(circle at 50% 65%, #fff6d8 0%, #f4d08a 45%, #cbb6ec 100%);
+    box-shadow:0 0 14px 4px rgba(240,208,138,.7), 0 0 26px 8px rgba(203,182,236,.4);
+    transform-origin:50% 100%;animation:flick 2.4s ease-in-out infinite}
+  .flame::after{content:"";position:absolute}
+  @keyframes flick{0%,100%{transform:scale(1) rotate(-1deg)}50%{transform:scale(1.06,1.12) rotate(1.5deg)}}
+  .stick{width:12px;height:54px;border-radius:3px;background:linear-gradient(180deg,#cbb6ec,#8f74c0);
+    box-shadow:inset 0 2px 4px rgba(255,255,255,.4)}
+  .wall-title{font-family:"Songti SC","Noto Serif SC",serif;font-size:17px;color:var(--glow);letter-spacing:2px;margin-bottom:4px}
+  .wall-sub{font-size:12px;color:var(--muted);margin-bottom:16px}
+  .plaques{width:100%;max-width:22em;display:flex;flex-direction:column;gap:12px;padding:0 4px}
+  .plaque{position:relative;background:linear-gradient(160deg,rgba(203,182,236,.14),rgba(203,182,236,.06));
+    border:1px solid var(--line);border-radius:12px;padding:14px 40px 14px 16px;text-align:left;
+    box-shadow:0 4px 16px -10px rgba(240,208,138,.5)}
+  .plaque .txt{font-family:"Songti SC","Noto Serif SC",serif;font-size:15px;line-height:1.7;color:var(--glow);word-break:break-word}
+  .plaque .date{font-size:11px;color:var(--muted);margin-top:6px;letter-spacing:.5px}
+  .plaque .rm{position:absolute;right:10px;top:12px;background:none;border:none;color:var(--muted);
+    font-size:16px;cursor:pointer;width:auto;opacity:.5}
+  .plaque .rm:active{opacity:1;color:var(--rose)}
+  .wall-empty{color:var(--muted);font-size:13.5px;line-height:1.9;max-width:16em;margin:10px 0 20px}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script>
+const KEY='safehouse_vows_v1';
+let state='entry';
+let blocked='';
+
+const app=document.getElementById('app');
+function loadVows(){try{return JSON.parse(localStorage.getItem(KEY))||[];}catch(e){return[];}}
+function saveVows(a){try{localStorage.setItem(KEY,JSON.stringify(a));}catch(e){}}
+
+function render(){
+  if(state==='entry'){
+    const has=loadVows().length;
+    app.innerHTML=`<div class="screen show">
+      <div class="door-stage">
+        <div class="frame"></div><div class="outside"></div>
+        <div class="door closed"><div class="plate">安<br>全<br>基<br>地</div><span class="knob"></span></div>
+      </div>
+      <h1>进来，你已经安全了</h1>
+      <p class="lead">风能进，雨能进，<br>国王不能进，老板更不能进。<br>进来吧，所有伤害都被挡在门外。</p>
+      <div class="btns">
+        <button class="primary" onclick="go('write')">进屋</button>
+        ${has?`<button class="link" onclick="go('wall')">看看我的宣言墙（${has}）</button>`:''}
+      </div>
+      <div class="foot">李啸天 · 呼啸客栈</div>
+    </div>`;return;
+  }
+
+  if(state==='write'){
+    app.innerHTML=`<div class="screen show">
+      <h1 style="font-size:22px">有什么，是你想关在门外的？</h1>
+      <p class="soft">今天受的一句话、一个否定你的声音、某个人的脸……<br>写下来，待会儿把它关在门外。<br>（不想写也没关系，可以直接关门。）</p>
+      <textarea id="blk" maxlength="120" placeholder="想挡在门外的，写在这里">${esc(blocked)}</textarea>
+      <div class="btns">
+        <button class="primary" onclick="saveBlocked()">就关它在门外</button>
+        <button class="ghost" onclick="skipWrite()">不写，直接关门</button>
+      </div>
+    </div>`;
+    setTimeout(()=>{const b=document.getElementById('blk');if(b)b.focus();},300);return;
+  }
+
+  if(state==='closing'){
+    app.innerHTML=`<div class="screen show">
+      <div class="door-stage">
+        <div class="frame"></div>
+        <div class="outside"><div class="words">${esc(blocked||'')}</div></div>
+        <div class="door" id="door"><div class="plate">安<br>全<br>基<br>地</div><span class="knob"></span></div>
+      </div>
+      <p class="soft" id="closeHint">${blocked?'看着它，被关在门外。':'关上门吧。'}</p>
+      <div class="btns"><button class="primary" id="closeBtn" onclick="closeDoor()">关上门</button></div>
+    </div>`;return;
+  }
+
+  if(state==='inside'){
+    app.innerHTML=`<div class="screen inside show">
+      <div class="lamp"></div>
+      <h1>门，关上了</h1>
+      <p class="manifesto">回首向来萧瑟处，<br>归去，<br><span class="em">也无风雨也无晴。</span></p>
+      <div class="btns" style="margin-top:10px">
+        <button class="primary" onclick="go('vow')">在门上，写下我的宣言</button>
+        <button class="ghost" onclick="go('wall')">直接进入宣言墙</button>
+      </div>
+      <div class="foot">李啸天 · 呼啸客栈</div>
+    </div>`;return;
+  }
+
+  if(state==='vow'){
+    app.innerHTML=`<div class="screen show">
+      <h1 style="font-size:22px">写一句，挂在你的门上</h1>
+      <p class="soft">像一张贴在门口的纸条，<br>每次回到这里，它都提醒你——你是安全的。</p>
+      <textarea id="vow" maxlength="60" placeholder="例如：你已进入安全区。">你已进入安全区。</textarea>
+      <div class="btns">
+        <button class="primary" onclick="saveVow()">挂上门</button>
+        <button class="ghost" onclick="go('wall')">跳过</button>
+      </div>
+    </div>`;
+    setTimeout(()=>{const v=document.getElementById('vow');if(v){v.focus();v.select();}},300);return;
+  }
+
+  if(state==='wall'){
+    const vows=loadVows();
+    const list = vows.length ? vows.map((v,i)=>`
+      <div class="plaque">
+        <button class="rm" onclick="rmVow(${i})">×</button>
+        <div class="txt">${esc(v.t)}</div>
+        <div class="date">${v.d||''}</div>
+      </div>`).join('')
+      : `<p class="wall-empty">你还没有留下宣言。<br>每一次关上门，都可以在门上写一句，<br>它们会一盏盏，挂在这面墙上。</p>`;
+    app.innerHTML=`<div class="screen wall-screen show">
+      <div class="candles">
+        <div class="candle"><div class="flame"></div><div class="stick"></div></div>
+        <div class="candle"><div class="flame"></div><div class="stick"></div></div>
+      </div>
+      <div class="wall-title">我的宣言墙</div>
+      <div class="wall-sub">每守护自己一次，神经系统就从危险校准为安全；<br>你的安全基地，将从一个小屋，扩大为整个世界。</div>
+      <div class="plaques">${list}</div>
+      <div class="btns" style="margin-top:22px"><button class="ghost" onclick="reopen()">确认安全，回归现实</button></div>
+      <div class="foot" style="margin-top:14px">李啸天 · 呼啸客栈</div>
+    </div>`;return;
+  }
+}
+
+function go(s){state=s;render();}
+function saveBlocked(){blocked=document.getElementById('blk').value.trim();go('closing');}
+function skipWrite(){blocked='';go('closing');}
+
+function closeDoor(){
+  const door=document.getElementById('door');const btn=document.getElementById('closeBtn');const hint=document.getElementById('closeHint');
+  if(btn)btn.style.display='none';
+  door.classList.add('closed');
+  if(hint)hint.textContent='……';
+  setTimeout(()=>{state='inside';render();},3300);
+}
+
+function saveVow(){
+  const t=document.getElementById('vow').value.trim();
+  if(!t){go('wall');return;}
+  const vows=loadVows();
+  const now=new Date();
+  const d=(now.getMonth()+1)+'月'+now.getDate()+'日';
+  vows.unshift({t:t,d:d,ts:Date.now()});
+  saveVows(vows);
+  go('wall');
+}
+function rmVow(i){const vows=loadVows();vows.splice(i,1);saveVows(vows);render();}
+function reopen(){blocked='';state='entry';render();}
+
+function esc(s){return (s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+render();
+</script>
+</body>
+</html>

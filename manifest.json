@@ -1,0 +1,13 @@
+{
+  "name": "安全基地",
+  "short_name": "安全基地",
+  "description": "关上门，把所有伤害挡在门外",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1d1526",
+  "theme_color": "#1d1526",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
